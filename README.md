@@ -26,9 +26,10 @@ crab submit
 
 Collections
 -----------
-- ```gmtStage2Digis``` (```l1t::Muon``` objects)  
-- ```muons``` (```reco::Muon``` objects)  
-- ```standAloneMuons``` (```reco::Track``` objects)  
+- ```l1t::Muon``` objects  
+- ```reco::Muon``` objects  
+- ```reco::Track``` objects  
+- BMTF ```l1t::RegionalMuonCand``` objects   
 
 Useful links
 -------------
