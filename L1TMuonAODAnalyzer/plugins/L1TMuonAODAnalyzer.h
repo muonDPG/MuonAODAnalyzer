@@ -56,6 +56,7 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/L1TGlobal/interface/GlobalAlgBlk.h"
 #include "DataFormats/L1TGlobal/interface/GlobalExtBlk.h"
+#include "DataFormats/L1TMuon/interface/RegionalMuonCand.h"
 
 // muon track extrapolation
 #include "MuonAnalysis/MuonAssociators/interface/PropagateToMuonSetup.h"
@@ -99,6 +100,7 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
     edm::EDGetTokenT<std::vector< reco::Track> > standAloneMuonToken_;
     edm::EDGetTokenT<std::vector< reco::Track> > cosmicMuonToken_;
     edm::EDGetTokenT<l1t::MuonBxCollection>l1MuonToken_;
+    edm::EDGetTokenT<BXVector<l1t::RegionalMuonCand>> l1BMTFRegionalMuonCandToken_;
     edm::EDGetTokenT<std::vector<Vertex> > verticesToken_;
 
     Float_t MuonPtCut_;
@@ -223,6 +225,14 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
     vector <int> l1mu_bx;
     int l1mu_size;
     
+    vector <Float_t> BMTFMu_processor;
+    vector <Float_t> BMTFMu_hwPt;
+    vector <Float_t> BMTFMu_hwQual;
+    vector <Float_t> BMTFMu_hwSign;
+    vector <Float_t> BMTFMu_hwSignValid;
+    vector <Float_t> BMTFMu_hwEta;
+    vector <Float_t> BMTFMu_hwPhi;
+
     //
     // constants, enums and typedefs
     //

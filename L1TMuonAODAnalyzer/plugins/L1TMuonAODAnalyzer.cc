@@ -28,6 +28,7 @@ L1TMuonAODAnalyzer::L1TMuonAODAnalyzer(const edm::ParameterSet& iConfig)
     standAloneMuonToken_(consumes< std::vector< reco::Track> >(iConfig.getParameter<edm::InputTag>("standAloneMuons"))),
     cosmicMuonToken_(consumes< std::vector< reco::Track> >(iConfig.getParameter<edm::InputTag>("cosmicMuons"))),
     l1MuonToken_(consumes<l1t::MuonBxCollection>(edm::InputTag("gmtStage2Digis","Muon"))),
+    l1BMTFRegionalMuonCandToken_(consumes<BXVector<l1t::RegionalMuonCand>>(edm::InputTag("gmtStage2Digis","BMTF"))),
     verticesToken_(consumes<std::vector<Vertex> > (iConfig.getParameter<edm::InputTag>("Vertices"))),
 
     MuonPtCut_(iConfig.getParameter<double>("MuonPtCut")),
@@ -91,6 +92,22 @@ void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
 
       }
     }
+
+  // BMTF RegionalMuonCand
+  edm::Handle<BXVector<l1t::RegionalMuonCand>> l1RegionalMuoncoll;
+  iEvent.getByToken(l1BMTFRegionalMuonCandToken_ , l1RegionalMuoncoll);
+  for(int i = l1RegionalMuoncoll->getFirstBX() ; i<= l1RegionalMuoncoll->getLastBX() ;i++){
+    for( BXVector<l1t::RegionalMuonCand>::const_iterator l1muonit= l1RegionalMuoncoll->begin(i); l1muonit != l1RegionalMuoncoll->end(i) ; ++l1muonit){
+      BMTFMu_processor.push_back(l1muonit->processor());
+      BMTFMu_hwPt.push_back(l1muonit->hwPt());
+      BMTFMu_hwQual.push_back(l1muonit->hwQual());
+      BMTFMu_hwSign.push_back(l1muonit->hwSign());
+      BMTFMu_hwSignValid.push_back(l1muonit->hwSignValid());
+      BMTFMu_hwEta.push_back(l1muonit->hwEta());
+      BMTFMu_hwPhi.push_back(l1muonit->hwPhi());
+    }
+  }
+
 
   //Vertices
   edm::Handle<std::vector<Vertex> > theVertices;
@@ -306,6 +323,15 @@ void L1TMuonAODAnalyzer::beginJob() {
   outputTree->Branch("l1mu_tfIdx",&l1mu_tfIdx);
   outputTree->Branch("l1mu_bx",&l1mu_bx);
   outputTree->Branch("l1mu_size", &l1mu_size, "l1mu_size/I");
+
+  outputTree->Branch("BMTFMu_processor",&BMTFMu_processor);
+  outputTree->Branch("BMTFMu_hwPt",&BMTFMu_hwPt);
+  outputTree->Branch("BMTFMu_hwQual",&BMTFMu_hwQual);
+  outputTree->Branch("BMTFMu_hwSign",&BMTFMu_hwSign);
+  outputTree->Branch("BMTFMu_hwSignValid",&BMTFMu_hwSignValid);
+  outputTree->Branch("BMTFMu_hwEta",&BMTFMu_hwEta);
+  outputTree->Branch("BMTFMu_hwPhi",&BMTFMu_hwPhi);
+
 }
 
 void L1TMuonAODAnalyzer::endJob() {}
@@ -387,6 +413,14 @@ void L1TMuonAODAnalyzer::InitandClearStuff() {
   l1mu_tfIdx.clear();
   l1mu_bx.clear();
   l1mu_size = 0;
+
+  BMTFMu_processor.clear();
+  BMTFMu_hwPt.clear();
+  BMTFMu_hwQual.clear();
+  BMTFMu_hwSign.clear();
+  BMTFMu_hwSignValid.clear();
+  BMTFMu_hwEta.clear();
+  BMTFMu_hwPhi.clear();
 
 }
 
