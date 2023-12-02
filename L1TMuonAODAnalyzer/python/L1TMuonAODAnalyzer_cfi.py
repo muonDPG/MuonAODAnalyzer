@@ -3,9 +3,9 @@ import FWCore.ParameterSet.Config as cms
 L1TMuonAODAnalyzer = cms.EDAnalyzer('L1TMuonAODAnalyzer',
 
     Muons=cms.InputTag("muons"),
-    standAloneMuons=cms.InputTag("standAloneMuons"),
-    cosmicMuons=cms.InputTag("cosmicMuons"),
     Vertices=cms.InputTag("offlinePrimaryVertices"),
+    Triggers = cms.InputTag("TriggerResults::HLT"),
+    l1GtSrc = cms.InputTag("gtStage2Digis"),
 
     MuonPtCut=cms.double(0),
     IsMC=cms.bool(False),

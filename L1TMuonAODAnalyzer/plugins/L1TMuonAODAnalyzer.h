@@ -81,8 +81,6 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
     explicit L1TMuonAODAnalyzer(const edm::ParameterSet&);
     ~L1TMuonAODAnalyzer() override;
 
-    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-
   private:
     void beginJob() override;
     void analyze(const edm::Event&, const edm::EventSetup&) override;
@@ -97,11 +95,12 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
 
     // ----------member data ---------------------------
     edm::EDGetTokenT<std::vector< reco::Muon> > muonToken_;
-    edm::EDGetTokenT<std::vector< reco::Track> > standAloneMuonToken_;
-    edm::EDGetTokenT<std::vector< reco::Track> > cosmicMuonToken_;
     edm::EDGetTokenT<l1t::MuonBxCollection>l1MuonToken_;
     edm::EDGetTokenT<BXVector<l1t::RegionalMuonCand>> l1BMTFRegionalMuonCandToken_;
     edm::EDGetTokenT<std::vector<Vertex> > verticesToken_;
+    edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_;
+    edm::EDGetTokenT<GlobalExtBlkBxCollection> UnprefirableEventToken_;
+    edm::EDGetTokenT<BXVector<GlobalAlgBlk>> l1GtToken_;
 
     Float_t MuonPtCut_;
     Bool_t SaveTree_, IsMC_, Debug_;
@@ -146,70 +145,16 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
     vector<Float_t>  muon_pt;
     vector<Float_t>  muon_ptCorr;
     vector <int>     muon_charge;
-
     vector<Float_t>  muon_dz;
     vector<Float_t>  muon_dzError;
     vector<Float_t>  muon_dxy;
     vector<Float_t>  muon_dxyError;
     vector<Float_t>  muon_3dIP;
     vector<Float_t>  muon_3dIPError;
-
     vector<Bool_t>  muon_PassTightID;
     vector<Bool_t>  muon_PassLooseID;
     vector<Bool_t> muon_isSAMuon ;
-
     int muon_size;
-
-    // standAloneMuons
-    vector<Float_t>  standAloneMuon_eta;
-    vector<Float_t>  standAloneMuon_etaAtSt1;
-    vector<Float_t>  standAloneMuon_etaAtSt2;
-    vector<Float_t>  standAloneMuon_phi;
-    vector<Float_t>  standAloneMuon_phiAtSt1;
-    vector<Float_t>  standAloneMuon_phiAtSt2;
-    vector<Float_t>  standAloneMuon_pt;
-    vector<Float_t>  standAloneMuon_ptCorr;
-    vector <int>     standAloneMuon_charge;
-
-    vector<Float_t>  standAloneMuon_dz;
-    vector<Float_t>  standAloneMuon_dzError;
-    vector<Float_t>  standAloneMuon_dxy;
-    vector<Float_t>  standAloneMuon_dxyError;
-    vector<Float_t>  standAloneMuon_3dIP;
-    vector<Float_t>  standAloneMuon_3dIPError;
-
-    vector<Bool_t>  standAloneMuon_PassTightID;
-    vector<Bool_t>  standAloneMuon_PassLooseID;
-    vector<Bool_t> standAloneMuon_isSAMuon ;
-
-
-    int standAloneMuon_size;
-
-
-    // cosmicAloneMuons
-    vector<Float_t>  cosmicMuon_eta;
-    vector<Float_t>  cosmicMuon_etaAtSt1;
-    vector<Float_t>  cosmicMuon_etaAtSt2;
-    vector<Float_t>  cosmicMuon_phi;
-    vector<Float_t>  cosmicMuon_phiAtSt1;
-    vector<Float_t>  cosmicMuon_phiAtSt2;
-    vector<Float_t>  cosmicMuon_pt;
-    vector<Float_t>  cosmicMuon_ptCorr;
-    vector <int>     cosmicMuon_charge;
-
-    vector<Float_t>  cosmicMuon_dz;
-    vector<Float_t>  cosmicMuon_dzError;
-    vector<Float_t>  cosmicMuon_dxy;
-    vector<Float_t>  cosmicMuon_dxyError;
-    vector<Float_t>  cosmicMuon_3dIP;
-    vector<Float_t>  cosmicMuon_3dIPError;
-
-    vector<Bool_t>  cosmicMuon_PassTightID;
-    vector<Bool_t>  cosmicMuon_PassLooseID;
-    vector<Bool_t> cosmicMuon_isSAMuon ;
-
-
-    int cosmicMuon_size;
 
     //L1 muon
     vector <int> l1mu_qual;
@@ -225,6 +170,7 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
     vector <int> l1mu_bx;
     int l1mu_size;
     
+    // BMTF RegionalMuonCand muons
     vector <Float_t> BMTFMu_processor;
     vector <Float_t> BMTFMu_hwPt;
     vector <Float_t> BMTFMu_hwQual;
@@ -232,6 +178,14 @@ class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources
     vector <Float_t> BMTFMu_hwSignValid;
     vector <Float_t> BMTFMu_hwEta;
     vector <Float_t> BMTFMu_hwPhi;
+
+    //Triggers
+    bool HLT_IsoMu27;
+    bool HLT_IsoMu24;
+  
+    bool Flag_IsUnprefirable;
+    bool passL1_Final_bxmin1;
+    bool passL1_Final_bxmin2;
 
     //
     // constants, enums and typedefs

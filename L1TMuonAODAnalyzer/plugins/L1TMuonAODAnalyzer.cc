@@ -25,11 +25,12 @@
 L1TMuonAODAnalyzer::L1TMuonAODAnalyzer(const edm::ParameterSet& iConfig)
     :
     muonToken_(consumes< std::vector< reco::Muon> >(iConfig.getParameter<edm::InputTag>("Muons"))),
-    standAloneMuonToken_(consumes< std::vector< reco::Track> >(iConfig.getParameter<edm::InputTag>("standAloneMuons"))),
-    cosmicMuonToken_(consumes< std::vector< reco::Track> >(iConfig.getParameter<edm::InputTag>("cosmicMuons"))),
     l1MuonToken_(consumes<l1t::MuonBxCollection>(edm::InputTag("gmtStage2Digis","Muon"))),
     l1BMTFRegionalMuonCandToken_(consumes<BXVector<l1t::RegionalMuonCand>>(edm::InputTag("gmtStage2Digis","BMTF"))),
     verticesToken_(consumes<std::vector<Vertex> > (iConfig.getParameter<edm::InputTag>("Vertices"))),
+    trgresultsToken_(consumes<TriggerResults>(iConfig.getParameter<edm::InputTag>("Triggers"))),
+    UnprefirableEventToken_(consumes<GlobalExtBlkBxCollection>(edm::InputTag("simGtExtUnprefireable"))),
+    l1GtToken_(consumes<BXVector<GlobalAlgBlk>>(iConfig.getParameter<edm::InputTag>("l1GtSrc"))),
 
     MuonPtCut_(iConfig.getParameter<double>("MuonPtCut")),
     SaveTree_(iConfig.getParameter<bool>("SaveTree")),
@@ -37,8 +38,7 @@ L1TMuonAODAnalyzer::L1TMuonAODAnalyzer(const edm::ParameterSet& iConfig)
     Debug_(iConfig.getParameter<bool>("Debug")),
 
     muPropagatorSetup1st_(iConfig.getParameter<edm::ParameterSet>("muProp1st"), consumesCollector()),
-    muPropagatorSetup2nd_(iConfig.getParameter<edm::ParameterSet>("muProp2nd"), consumesCollector()),
-    results_(nullptr)
+    muPropagatorSetup2nd_(iConfig.getParameter<edm::ParameterSet>("muProp2nd"), consumesCollector())
 
 {
   //now do what ever initialization is needed
@@ -70,28 +70,68 @@ void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
   _lumiBlock = iEvent.luminosityBlock();
   _bx=iEvent.bunchCrossing();
 
-  // L1 muons
-    edm::Handle<l1t::MuonBxCollection> l1muoncoll;
-    iEvent.getByToken(l1MuonToken_ , l1muoncoll);
-    for(int i = l1muoncoll->getFirstBX() ; i<= l1muoncoll->getLastBX() ;i++){
-      for( l1t::MuonBxCollection::const_iterator l1muonit= l1muoncoll->begin(i); l1muonit != l1muoncoll->end(i) ; ++l1muonit){
-        if(l1muonit->pt() < 0) continue;
-        l1mu_qual.push_back( l1muonit->hwQual() );
-        l1mu_charge.push_back( l1muonit->charge() );
-        l1mu_pt.push_back( l1muonit->pt() );
-        l1mu_pt_dxy.push_back( l1muonit->ptUnconstrained() );
-        l1mu_dxy.push_back( l1muonit->hwDXY() );
-        l1mu_eta.push_back( l1muonit->eta() );
-        l1mu_etaAtVtx.push_back( l1muonit->etaAtVtx() );
-        l1mu_phi.push_back( l1muonit->phi() );
-        l1mu_phiAtVtx.push_back( l1muonit->phiAtVtx() );
-        l1mu_tfIdx.push_back(l1muonit->tfMuonIndex());
-
-        l1mu_bx.push_back( i);
-        l1mu_size++;
-
+  //Triggers
+  edm::Handle<TriggerResults> trigResults;
+  iEvent.getByToken(trgresultsToken_, trigResults);
+  if( !trigResults.failedToGet() ) {
+    int N_Triggers = trigResults->size();
+    edm::TriggerNames const& trigName = iEvent.triggerNames(*trigResults);
+    for( int i_Trig = 0; i_Trig < N_Triggers; ++i_Trig ) {
+      if (trigResults.product()->accept(i_Trig)) {
+	      TString TrigPath = trigName.triggerName(i_Trig);
+	      if(TrigPath.Contains("HLT_IsoMu27_v"))HLT_IsoMu27 =true;
+        if(TrigPath.Contains("HLT_IsoMu24_v"))HLT_IsoMu24 =true;
       }
     }
+  }
+
+  //Unprefirable events
+  edm::Handle<GlobalExtBlkBxCollection> handleUnprefEventResults;
+  iEvent.getByToken(UnprefirableEventToken_, handleUnprefEventResults);
+  if(handleUnprefEventResults.isValid()){
+    if (handleUnprefEventResults->size() != 0) {
+      Flag_IsUnprefirable = handleUnprefEventResults->at(0, 0).getExternalDecision(GlobalExtBlk::maxExternalConditions - 1);
+    }
+  }
+
+  //first bunch in train
+  edm::Handle<BXVector<GlobalAlgBlk>> l1GtHandle;
+  iEvent.getByToken(l1GtToken_, l1GtHandle);
+  for(int i =0; i <512; i++){
+    if(!IsMC_){ 
+      if(i==472){
+        passL1_Final_bxmin1= l1GtHandle->begin(-1)->getAlgoDecisionFinal(i);
+        passL1_Final_bxmin2= l1GtHandle->begin(-2)->getAlgoDecisionFinal(i);
+      }
+    }
+    else {
+      passL1_Final_bxmin1= false;
+      passL1_Final_bxmin2= false;
+    }
+  }
+
+  // L1 muons
+  edm::Handle<l1t::MuonBxCollection> l1muoncoll;
+  iEvent.getByToken(l1MuonToken_ , l1muoncoll);
+  for(int i = l1muoncoll->getFirstBX() ; i<= l1muoncoll->getLastBX() ;i++){
+    for( l1t::MuonBxCollection::const_iterator l1muonit= l1muoncoll->begin(i); l1muonit != l1muoncoll->end(i) ; ++l1muonit){
+      if(l1muonit->pt() < 0) continue;
+      l1mu_qual.push_back( l1muonit->hwQual() );
+      l1mu_charge.push_back( l1muonit->charge() );
+      l1mu_pt.push_back( l1muonit->pt() );
+      l1mu_pt_dxy.push_back( l1muonit->ptUnconstrained() );
+      l1mu_dxy.push_back( l1muonit->hwDXY() );
+      l1mu_eta.push_back( l1muonit->eta() );
+      l1mu_etaAtVtx.push_back( l1muonit->etaAtVtx() );
+      l1mu_phi.push_back( l1muonit->phi() );
+      l1mu_phiAtVtx.push_back( l1muonit->phiAtVtx() );
+      l1mu_tfIdx.push_back(l1muonit->tfMuonIndex());
+
+      l1mu_bx.push_back( i);
+      l1mu_size++;
+
+    }
+  }
 
   // BMTF RegionalMuonCand
   edm::Handle<BXVector<l1t::RegionalMuonCand>> l1RegionalMuoncoll;
@@ -116,7 +156,7 @@ void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
   Vertex::Point PV(0,0,0);
   if(_n_PV){ PV = theVertices->begin()->position();}
 
-  //Muons
+  // reco muons
   edm::Handle< std::vector<reco::Muon> > theMuons;
   iEvent.getByToken(muonToken_,theMuons);
   for( std::vector<reco::Muon>::const_iterator muon = (*theMuons).begin(); muon != (*theMuons).end(); muon++ ) {
@@ -142,7 +182,6 @@ void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
       muon_dxy.push_back(-999.);
     }
 
-
     // extrapolation of muon track coordinates
     TrajectoryStateOnSurface stateAtMuSt1 = muPropagator1st_.extrapolate(*muon);
     if (stateAtMuSt1.isValid()) {
@@ -163,79 +202,6 @@ void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
     }
   }
 
-  // standAlone Muons
-  edm::Handle< std::vector<reco::Track> > theStandAloneMuons;
-  iEvent.getByToken(standAloneMuonToken_,theStandAloneMuons);
-  for( std::vector<reco::Track>::const_iterator muon = (*theStandAloneMuons).begin(); muon != (*theStandAloneMuons).end(); muon++ ) {
-    if((&*muon)->pt() <0) continue; //Loose cut  on uncorrected pt 
-
-    double ptmuoncorr= (&*muon)->pt();
-
-    standAloneMuon_size++;
-    standAloneMuon_eta.push_back((&*muon)->eta());
-    standAloneMuon_phi.push_back((&*muon)->phi());
-    standAloneMuon_pt.push_back((&*muon)->pt());
-    standAloneMuon_ptCorr.push_back( ptmuoncorr );
-    standAloneMuon_charge.push_back((&*muon)->charge());
-    standAloneMuon_dxy.push_back( (&*muon)->dxy());
-
-    // extrapolation of muon track coordinates
-    TrajectoryStateOnSurface stateAtMuSt1 = muPropagator1st_.extrapolate(*muon);
-    if (stateAtMuSt1.isValid()) {
-        standAloneMuon_etaAtSt1.push_back(stateAtMuSt1.globalPosition().eta());
-        standAloneMuon_phiAtSt1.push_back(stateAtMuSt1.globalPosition().phi());
-    } else {
-        standAloneMuon_etaAtSt1.push_back(-999);
-        standAloneMuon_phiAtSt1.push_back(-999);
-    }
-
-    TrajectoryStateOnSurface stateAtMuSt2 = muPropagator2nd_.extrapolate(*muon);
-    if (stateAtMuSt2.isValid()) {
-        standAloneMuon_etaAtSt2.push_back(stateAtMuSt2.globalPosition().eta());
-        standAloneMuon_phiAtSt2.push_back(stateAtMuSt2.globalPosition().phi());
-    } else {
-        standAloneMuon_etaAtSt2.push_back(-999);
-        standAloneMuon_phiAtSt2.push_back(-999);
-    }
-  }
-
-  // cosmicMuons
-  edm::Handle< std::vector<reco::Track> > theCosmicMuons;
-  iEvent.getByToken(cosmicMuonToken_,theCosmicMuons);
-  for( std::vector<reco::Track>::const_iterator muon = (*theCosmicMuons).begin(); muon != (*theCosmicMuons).end(); muon++ ) {
-    if((&*muon)->pt() <0) continue; //Loose cut  on uncorrected pt 
-
-    double ptmuoncorr= (&*muon)->pt();
-
-    // store all reco muons for now
-    cosmicMuon_size++;
-    cosmicMuon_eta.push_back((&*muon)->eta());
-    cosmicMuon_phi.push_back((&*muon)->phi());
-    cosmicMuon_pt.push_back((&*muon)->pt());
-    cosmicMuon_ptCorr.push_back( ptmuoncorr );
-    cosmicMuon_charge.push_back((&*muon)->charge());
-    cosmicMuon_dxy.push_back( (&*muon)->dxy());
-
-    // extrapolation of muon track coordinates
-    TrajectoryStateOnSurface stateAtMuSt1 = muPropagator1st_.extrapolate(*muon);
-    if (stateAtMuSt1.isValid()) {
-        cosmicMuon_etaAtSt1.push_back(stateAtMuSt1.globalPosition().eta());
-        cosmicMuon_phiAtSt1.push_back(stateAtMuSt1.globalPosition().phi());
-    } else {
-        cosmicMuon_etaAtSt1.push_back(-999);
-        cosmicMuon_phiAtSt1.push_back(-999);
-    }
-
-    TrajectoryStateOnSurface stateAtMuSt2 = muPropagator2nd_.extrapolate(*muon);
-    if (stateAtMuSt2.isValid()) {
-        cosmicMuon_etaAtSt2.push_back(stateAtMuSt2.globalPosition().eta());
-        cosmicMuon_phiAtSt2.push_back(stateAtMuSt2.globalPosition().phi());
-    } else {
-        cosmicMuon_etaAtSt2.push_back(-999);
-        cosmicMuon_phiAtSt2.push_back(-999);
-    }
-  }
-
   if(SaveTree_)outputTree->Fill();
 
 }
@@ -249,7 +215,6 @@ void L1TMuonAODAnalyzer::beginJob() {
   outputTree->Branch("_lumiBlock", &_lumiBlock, "_lumiBlock/l");
   outputTree->Branch("_bx", &_bx, "_bx/l");
 
-
   outputTree->Branch("muon_eta",&muon_eta);
   outputTree->Branch("muon_etaAtSt1",&muon_etaAtSt1);
   outputTree->Branch("muon_etaAtSt2",&muon_etaAtSt2);
@@ -259,57 +224,16 @@ void L1TMuonAODAnalyzer::beginJob() {
   outputTree->Branch("muon_pt",&muon_pt);
   outputTree->Branch("muon_ptCorr",&muon_ptCorr);
   outputTree->Branch("muon_charge",&muon_charge);
-
   outputTree->Branch("muon_dz",&muon_dz);
   outputTree->Branch("muon_dzError",&muon_dzError);
   outputTree->Branch("muon_dxy",&muon_dxy);
   outputTree->Branch("muon_dxyError",&muon_dxyError);
   outputTree->Branch("muon_3dIP",&muon_3dIP);
   outputTree->Branch("muon_3dIPError",&muon_3dIPError);
-
   outputTree->Branch("muon_PassTightID",&muon_PassTightID);
   outputTree->Branch("muon_PassLooseID",&muon_PassLooseID);
   outputTree->Branch("muon_isSAMuon",&muon_isSAMuon);
-
   outputTree->Branch("muon_size", &muon_size, "muon_size/I");
-
-  outputTree->Branch("standAloneMuon_eta",&standAloneMuon_eta);
-  outputTree->Branch("standAloneMuon_etaAtSt1",&standAloneMuon_etaAtSt1);
-  outputTree->Branch("standAloneMuon_etaAtSt2",&standAloneMuon_etaAtSt2);
-  outputTree->Branch("standAloneMuon_phi",&standAloneMuon_phi);
-  outputTree->Branch("standAloneMuon_phiAtSt1",&standAloneMuon_phiAtSt1);
-  outputTree->Branch("standAloneMuon_phiAtSt2",&standAloneMuon_phiAtSt2);
-  outputTree->Branch("standAloneMuon_pt",&standAloneMuon_pt);
-  outputTree->Branch("standAloneMuon_ptCorr",&standAloneMuon_ptCorr);
-  outputTree->Branch("standAloneMuon_charge",&standAloneMuon_charge);
-  outputTree->Branch("standAloneMuon_dz",&standAloneMuon_dz);
-  outputTree->Branch("standAloneMuon_dzError",&standAloneMuon_dzError);
-  outputTree->Branch("standAloneMuon_dxy",&standAloneMuon_dxy);
-  outputTree->Branch("standAloneMuon_dxyError",&standAloneMuon_dxyError);
-  outputTree->Branch("standAloneMuon_3dIP",&standAloneMuon_3dIP);
-  outputTree->Branch("standAloneMuon_3dIPError",&standAloneMuon_3dIPError);
-  outputTree->Branch("standAloneMuon_PassTightID",&standAloneMuon_PassTightID);
-  outputTree->Branch("standAloneMuon_PassLooseID",&standAloneMuon_PassLooseID);
-  outputTree->Branch("standAloneMuon_size", &standAloneMuon_size, "standAloneMuon_size/I");
-
-  outputTree->Branch("cosmicMuon_eta",&cosmicMuon_eta);
-  outputTree->Branch("cosmicMuon_etaAtSt1",&cosmicMuon_etaAtSt1);
-  outputTree->Branch("cosmicMuon_etaAtSt2",&cosmicMuon_etaAtSt2);
-  outputTree->Branch("cosmicMuon_phi",&cosmicMuon_phi);
-  outputTree->Branch("cosmicMuon_phiAtSt1",&cosmicMuon_phiAtSt1);
-  outputTree->Branch("cosmicMuon_phiAtSt2",&cosmicMuon_phiAtSt2);
-  outputTree->Branch("cosmicMuon_pt",&cosmicMuon_pt);
-  outputTree->Branch("cosmicMuon_ptCorr",&cosmicMuon_ptCorr);
-  outputTree->Branch("cosmicMuon_charge",&cosmicMuon_charge);
-  outputTree->Branch("cosmicMuon_dz",&cosmicMuon_dz);
-  outputTree->Branch("cosmicMuon_dzError",&cosmicMuon_dzError);
-  outputTree->Branch("cosmicMuon_dxy",&cosmicMuon_dxy);
-  outputTree->Branch("cosmicMuon_dxyError",&cosmicMuon_dxyError);
-  outputTree->Branch("cosmicMuon_3dIP",&cosmicMuon_3dIP);
-  outputTree->Branch("cosmicMuon_3dIPError",&cosmicMuon_3dIPError);
-  outputTree->Branch("cosmicMuon_PassTightID",&cosmicMuon_PassTightID);
-  outputTree->Branch("cosmicMuon_PassLooseID",&cosmicMuon_PassLooseID);
-  outputTree->Branch("cosmicMuon_size", &cosmicMuon_size, "cosmicMuon_size/I");
 
   outputTree->Branch("l1mu_qual",&l1mu_qual);
   outputTree->Branch("l1mu_charge",&l1mu_charge);
@@ -332,6 +256,12 @@ void L1TMuonAODAnalyzer::beginJob() {
   outputTree->Branch("BMTFMu_hwEta",&BMTFMu_hwEta);
   outputTree->Branch("BMTFMu_hwPhi",&BMTFMu_hwPhi);
 
+  outputTree->Branch("HLT_IsoMu27",&HLT_IsoMu27,"HLT_IsoMu27/O");
+  outputTree->Branch("HLT_IsoMu24",&HLT_IsoMu24,"HLT_IsoMu24/O");
+
+  outputTree->Branch("Flag_IsUnprefirable",&Flag_IsUnprefirable,"Flag_IsUnprefirable/O");
+  outputTree->Branch("passL1_Final_bxmin1",&passL1_Final_bxmin1,"passL1_Final_bxmin1/O");
+  outputTree->Branch("passL1_Final_bxmin2",&passL1_Final_bxmin2,"passL1_Final_bxmin2/O");
 }
 
 void L1TMuonAODAnalyzer::endJob() {}
@@ -347,59 +277,16 @@ void L1TMuonAODAnalyzer::InitandClearStuff() {
   muon_pt.clear();
   muon_ptCorr.clear();
   muon_charge.clear();
-
   muon_dz.clear();
   muon_dzError.clear();
   muon_dxy.clear();
   muon_dxyError.clear();
   muon_3dIP.clear();
   muon_3dIPError.clear();
-
   muon_PassTightID.clear();
   muon_PassLooseID.clear();
   muon_isSAMuon.clear() ;
-
   muon_size = 0;
-
-  standAloneMuon_eta.clear();
-  standAloneMuon_etaAtSt1.clear();
-  standAloneMuon_etaAtSt2.clear();
-  standAloneMuon_phi.clear();
-  standAloneMuon_phiAtSt1.clear();
-  standAloneMuon_phiAtSt2.clear();
-  standAloneMuon_pt.clear();
-  standAloneMuon_ptCorr.clear();
-  standAloneMuon_charge.clear();
-  standAloneMuon_dz.clear();
-  standAloneMuon_dzError.clear();
-  standAloneMuon_dxy.clear();
-  standAloneMuon_dxyError.clear();
-  standAloneMuon_3dIP.clear();
-  standAloneMuon_3dIPError.clear();
-  standAloneMuon_PassTightID.clear();
-  standAloneMuon_PassLooseID.clear();
-  standAloneMuon_isSAMuon.clear() ;
-  standAloneMuon_size = 0;
-
-  cosmicMuon_eta.clear();
-  cosmicMuon_etaAtSt1.clear();
-  cosmicMuon_etaAtSt2.clear();
-  cosmicMuon_phi.clear();
-  cosmicMuon_phiAtSt1.clear();
-  cosmicMuon_phiAtSt2.clear();
-  cosmicMuon_pt.clear();
-  cosmicMuon_ptCorr.clear();
-  cosmicMuon_charge.clear();
-  cosmicMuon_dz.clear();
-  cosmicMuon_dzError.clear();
-  cosmicMuon_dxy.clear();
-  cosmicMuon_dxyError.clear();
-  cosmicMuon_3dIP.clear();
-  cosmicMuon_3dIPError.clear();
-  cosmicMuon_PassTightID.clear();
-  cosmicMuon_PassLooseID.clear();
-  cosmicMuon_isSAMuon.clear() ;
-  cosmicMuon_size = 0;
 
   l1mu_qual.clear();
   l1mu_charge.clear();
@@ -422,22 +309,12 @@ void L1TMuonAODAnalyzer::InitandClearStuff() {
   BMTFMu_hwEta.clear();
   BMTFMu_hwPhi.clear();
 
-}
+  HLT_IsoMu27 = false;
+  HLT_IsoMu24 = false;
 
-
-// ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void L1TMuonAODAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
-  edm::ParameterSetDescription desc;
-  desc.setUnknown();
-  descriptions.addDefault(desc);
-
-  //Specify that only 'tracks' is allowed
-  //To use, remove the default given above and uncomment below
-  //ParameterSetDescription desc;
-  //desc.addUntracked<edm::InputTag>("tracks","ctfWithMaterialTracks");
-  //descriptions.addWithDefaultLabel(desc);
+  Flag_IsUnprefirable = false;
+  passL1_Final_bxmin1 = false;
+  passL1_Final_bxmin2 = false;
 }
 
 //define this as a plug-in
