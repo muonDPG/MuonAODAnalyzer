@@ -3,7 +3,7 @@ This is a tool for analyzing AOD files and producing L1T muon ntuples.
 **NOTE:** Before setting up, check the CMSSW release used to create the AOD file you want to process. Older releases may not work! You can find the release in [DAS](https://cmsweb.cern.ch/das/), e.g.: 
 ```
 release dataset=/Cosmics/Run2024I-PromptReco-v1/AOD
-``
+```
 
 Setup
 -----
