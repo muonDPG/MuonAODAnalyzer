@@ -1,14 +1,19 @@
 This is a tool for analyzing AOD files and producing L1T muon ntuples.  
 
+**NOTE:** Before setting up, check the CMSSW release used to create the AOD file you want to process. Older releases may not work! You can find the release in [DAS](https://cmsweb.cern.ch/das/), e.g.: 
+```
+release dataset=/Cosmics/Run2024I-PromptReco-v1/AOD
+``
+
 Setup
 -----
 ```
-cmsrel CMSSW_13_0_3
-cd CMSSW_13_0_3/src
+cmsrel CMSSW_14_0_16
+cd CMSSW_14_0_16/src
 cmsenv
 voms-proxy-init --voms cms --valid 24:00:00
 
-git clone https://github.com/yiannispar/L1TMuonAODAnalyzer.git
+https://github.com/muonDPG/MuonAODAnalyzer.git
 scram b -j8
 ```
 

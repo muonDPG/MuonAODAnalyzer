@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-L1TMuonAODAnalyzer = cms.EDAnalyzer('L1TMuonAODAnalyzer',
+MuonAODAnalyzer = cms.EDAnalyzer('MuonAODAnalyzer',
 
     Muons=cms.InputTag("muons"),
     Vertices=cms.InputTag("offlinePrimaryVertices"),

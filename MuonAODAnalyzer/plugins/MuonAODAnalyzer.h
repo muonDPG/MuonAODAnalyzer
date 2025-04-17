@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    L1TMuonAODAnalyzer/L1TMuonAODAnalyzer
-// Class:      L1TMuonAODAnalyzer
+// Package:    MuonAODAnalyzer/MuonAODAnalyzer
+// Class:      MuonAODAnalyzer
 //
-/**\class L1TMuonAODAnalyzer L1TMuonAODAnalyzer.cc L1TMuonAODAnalyzer/L1TMuonAODAnalyzer/plugins/L1TMuonAODAnalyzer.cc
+/**\class MuonAODAnalyzer MuonAODAnalyzer.cc MuonAODAnalyzer/MuonAODAnalyzer/plugins/MuonAODAnalyzer.cc
 
  Description: [one line class summary]
 
@@ -76,10 +76,10 @@ using namespace edm;
 using namespace reco;
 
 
-class L1TMuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
+class MuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
   public:
-    explicit L1TMuonAODAnalyzer(const edm::ParameterSet&);
-    ~L1TMuonAODAnalyzer() override;
+    explicit MuonAODAnalyzer(const edm::ParameterSet&);
+    ~MuonAODAnalyzer() override;
 
   private:
     void beginJob() override;

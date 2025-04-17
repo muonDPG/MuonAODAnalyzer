@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    L1TMuonAODAnalyzer/L1TMuonAODAnalyzer
-// Class:      L1TMuonAODAnalyzer
+// Package:    MuonAODAnalyzer/MuonAODAnalyzer
+// Class:      MuonAODAnalyzer
 //
-/**\class L1TMuonAODAnalyzer L1TMuonAODAnalyzer.cc L1TMuonAODAnalyzer/L1TMuonAODAnalyzer/plugins/L1TMuonAODAnalyzer.cc
+/**\class MuonAODAnalyzer MuonAODAnalyzer.cc MuonAODAnalyzer/MuonAODAnalyzer/plugins/MuonAODAnalyzer.cc
 
  Description: [one line class summary]
 
@@ -16,13 +16,13 @@
 //
 //
 
-#include "L1TMuonAODAnalyzer.h"
+#include "MuonAODAnalyzer.h"
 
 
 //
 // constructors and destructor
 //
-L1TMuonAODAnalyzer::L1TMuonAODAnalyzer(const edm::ParameterSet& iConfig)
+MuonAODAnalyzer::MuonAODAnalyzer(const edm::ParameterSet& iConfig)
     :
     muonToken_(consumes< std::vector< reco::Muon> >(iConfig.getParameter<edm::InputTag>("Muons"))),
     l1MuonToken_(consumes<l1t::MuonBxCollection>(edm::InputTag("gmtStage2Digis","Muon"))),
@@ -49,14 +49,14 @@ L1TMuonAODAnalyzer::L1TMuonAODAnalyzer(const edm::ParameterSet& iConfig)
 
 }
 
-L1TMuonAODAnalyzer::~L1TMuonAODAnalyzer() {}
+MuonAODAnalyzer::~MuonAODAnalyzer() {}
 
 //
 // member functions
 //
 
 // ------------ method called for each event  ------------
-void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
 
   InitandClearStuff();
@@ -207,7 +207,7 @@ void L1TMuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
 }
 
 // ------------ method called once each job just before starting event loop  ------------
-void L1TMuonAODAnalyzer::beginJob() {
+void MuonAODAnalyzer::beginJob() {
   // please remove this method if not needed
 
   outputTree->Branch("_eventNb",   &_eventNb,   "_eventNb/l");
@@ -264,9 +264,9 @@ void L1TMuonAODAnalyzer::beginJob() {
   outputTree->Branch("passL1_Final_bxmin2",&passL1_Final_bxmin2,"passL1_Final_bxmin2/O");
 }
 
-void L1TMuonAODAnalyzer::endJob() {}
+void MuonAODAnalyzer::endJob() {}
 
-void L1TMuonAODAnalyzer::InitandClearStuff() {
+void MuonAODAnalyzer::InitandClearStuff() {
 
   muon_eta.clear();
   muon_etaAtSt1.clear();
@@ -318,4 +318,4 @@ void L1TMuonAODAnalyzer::InitandClearStuff() {
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(L1TMuonAODAnalyzer);
+DEFINE_FWK_MODULE(MuonAODAnalyzer);

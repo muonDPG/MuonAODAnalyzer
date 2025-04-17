@@ -23,17 +23,17 @@ patAlgosToolsTask = getPatAlgosToolsTask(process)
 process.source = cms.Source("PoolSource",
                                 fileNames = cms.untracked.vstring(
 
-'/store/data/Run2022C/Muon/AOD/16Jun2023-v1/2830000/00dbf34d-d9f9-4d0a-a035-13d3547707a4.root'
-
+#'/store/data/Run2022C/Muon/AOD/16Jun2023-v1/2830000/00dbf34d-d9f9-4d0a-a035-13d3547707a4.root'
+'/store/data/Run2024I/Cosmics/AOD/PromptReco-v1/000/386/455/00000/56bcb0a3-721e-4868-9ef3-4b2940882b3e.root'
 
                                 )
 )
 
 process.options = cms.untracked.PSet(
-    FailPath = cms.untracked.vstring(),
+    # FailPath = cms.untracked.vstring(),
     IgnoreCompletely = cms.untracked.vstring(),
     Rethrow = cms.untracked.vstring(),
-    SkipEvent = cms.untracked.vstring(),
+    # SkipEvent = cms.untracked.vstring(),
     accelerators = cms.untracked.vstring('*'),
     allowUnscheduled = cms.obsolete.untracked.bool,
     canDeleteEarly = cms.untracked.vstring(),
@@ -77,8 +77,8 @@ process.endjob_step = cms.EndPath(process.endOfProcess)
 # process.source.lumisToProcess.extend(myLumis)
 # JSONfile = 'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt'
 
-process.load('L1TMuonAODAnalyzer.L1TMuonAODAnalyzer.L1TMuonAODAnalyzer_cfi')
+process.load('MuonAODAnalyzer.MuonAODAnalyzer.MuonAODAnalyzer_cfi')
 
-process.analysis_step = cms.Path(process.L1TMuonAODAnalyzer)
+process.analysis_step = cms.Path(process.MuonAODAnalyzer)
 
 process.schedule = cms.Schedule(process.analysis_step, process.endjob_step)
