@@ -13,7 +13,7 @@ cd CMSSW_14_0_16/src
 cmsenv
 voms-proxy-init --voms cms --valid 24:00:00
 
-https://github.com/muonDPG/MuonAODAnalyzer.git
+git clone https://github.com/muonDPG/MuonAODAnalyzer.git
 scram b -j8
 ```
 
