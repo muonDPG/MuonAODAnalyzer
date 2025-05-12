@@ -58,6 +58,9 @@
 #include "DataFormats/L1TGlobal/interface/GlobalExtBlk.h"
 #include "DataFormats/L1TMuon/interface/RegionalMuonCand.h"
 
+// Information about stations
+#include "DataFormats/MuonReco/interface/Muon.h"
+
 // muon track extrapolation
 #include "MuonAnalysis/MuonAssociators/interface/PropagateToMuonSetup.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateOnSurface.h"
@@ -153,7 +156,26 @@ class MuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     vector<Float_t>  muon_3dIPError;
     vector<Bool_t>  muon_PassTightID;
     vector<Bool_t>  muon_PassLooseID;
-    vector<Bool_t> muon_isSAMuon ;
+    vector<Bool_t> muon_isSAMuon;
+    vector<Bool_t> muon_isGlobalMuon;
+    vector<Bool_t> muon_isTrackerMuon;
+    vector<Bool_t> muon_isPFMuon;
+
+    vector<Float_t> muon_vx;
+    vector<Float_t> muon_vy;
+    vector<Float_t> muon_vz;
+    vector<Float_t> muon_px;
+    vector<Float_t> muon_py;
+    vector<Float_t> muon_pz;
+
+    vector<int> muon_nChambers;
+    vector<int> muon_nChambersCSCorDT;
+    vector<int> muon_nMatches;
+    vector<int> muon_nMatchedStations;
+    vector<unsigned int> muon_expectedNumberOfMatchedStations;
+    vector<unsigned int> muon_stationMask;
+    vector<int> muon_nMatchedRPCLayers;
+    vector<unsigned int> muon_RPClayerMask;
     int muon_size;
 
     //L1 muon

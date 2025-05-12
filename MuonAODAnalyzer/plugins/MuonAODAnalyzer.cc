@@ -174,7 +174,26 @@ void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     muon_PassTightID.push_back(  (&*muon)->passed(reco::Muon::CutBasedIdMediumPrompt )&& (&*muon)->passed(reco::Muon::PFIsoTight ) );
     muon_PassLooseID.push_back(  (&*muon)->passed(reco::Muon::CutBasedIdLoose )&& (&*muon)->passed(reco::Muon::PFIsoLoose ) );
     muon_isSAMuon.push_back( (&*muon)->isStandAloneMuon());
+    muon_isTrackerMuon.push_back( (&*muon)->isTrackerMuon());
+    muon_isGlobalMuon.push_back( (&*muon)->isGlobalMuon());
+    muon_isPFMuon.push_back( (&*muon)->isPFMuon());
 
+    muon_vx.push_back( (&*muon)->vx() );
+    muon_vy.push_back( (&*muon)->vy() );
+    muon_vz.push_back( (&*muon)->vz() );
+    muon_px.push_back( (&*muon)->px() );
+    muon_py.push_back( (&*muon)->py() );
+    muon_pz.push_back( (&*muon)->pz() );
+
+    muon_nChambers.push_back( (&*muon)->numberOfChambers() );
+    muon_nChambersCSCorDT.push_back((&*muon)->numberOfChambersCSCorDT() );
+    muon_nMatches.push_back( (&*muon)->numberOfMatches() );
+    muon_nMatchedStations.push_back( (&*muon)->numberOfMatchedStations() );
+    muon_expectedNumberOfMatchedStations.push_back( (&*muon)->expectedNnumberOfMatchedStations() );
+    muon_stationMask.push_back( (&*muon)->stationMask() );
+    muon_nMatchedRPCLayers.push_back( (&*muon)->numberOfMatchedRPCLayers() );
+    muon_RPClayerMask.push_back( (&*muon)->RPClayerMask() );
+    
     if( !((&*muon)->innerTrack()).isNull()){
       muon_dxy.push_back( (&*muon)->innerTrack()->dxy(PV));
     }
@@ -233,6 +252,26 @@ void MuonAODAnalyzer::beginJob() {
   outputTree->Branch("muon_PassTightID",&muon_PassTightID);
   outputTree->Branch("muon_PassLooseID",&muon_PassLooseID);
   outputTree->Branch("muon_isSAMuon",&muon_isSAMuon);
+  outputTree->Branch("muon_isTrackerMuon",&muon_isTrackerMuon);
+  outputTree->Branch("muon_isGlobalMuon",&muon_isGlobalMuon);
+  outputTree->Branch("muon_isPFMuon",&muon_isPFMuon);
+
+  outputTree->Branch("muon_vx",&muon_vx);
+  outputTree->Branch("muon_vy",&muon_vy);
+  outputTree->Branch("muon_vz",&muon_vz);
+  outputTree->Branch("muon_px",&muon_px);
+  outputTree->Branch("muon_py",&muon_py);
+  outputTree->Branch("muon_pz",&muon_pz);
+
+  outputTree->Branch("muon_nChambers",&muon_nChambers);
+  outputTree->Branch("muon_nChambersCSCorDT",&muon_nChambersCSCorDT);
+  outputTree->Branch("muon_nMatches",&muon_nMatches);
+  outputTree->Branch("muon_nMatchedStations",&muon_nMatchedStations);
+  outputTree->Branch("muon_expectedNumberOfMatchedStations",&muon_expectedNumberOfMatchedStations);
+  outputTree->Branch("muon_stationMask",&muon_stationMask);
+  outputTree->Branch("muon_nMatchedRPCLayers",&muon_nMatchedRPCLayers);
+  outputTree->Branch("muon_RPClayerMask",&muon_RPClayerMask);
+
   outputTree->Branch("muon_size", &muon_size, "muon_size/I");
 
   outputTree->Branch("l1mu_qual",&l1mu_qual);
@@ -286,6 +325,25 @@ void MuonAODAnalyzer::InitandClearStuff() {
   muon_PassTightID.clear();
   muon_PassLooseID.clear();
   muon_isSAMuon.clear() ;
+  muon_isTrackerMuon.clear();
+  muon_isGlobalMuon.clear();
+  muon_isPFMuon.clear();
+  muon_nChambers.clear();
+  muon_nChambersCSCorDT.clear();
+  muon_nMatches.clear();
+  muon_nMatchedStations.clear();
+  muon_expectedNumberOfMatchedStations.clear();
+  muon_stationMask.clear();
+  muon_nMatchedRPCLayers.clear();
+  muon_RPClayerMask.clear();
+
+  muon_vx.clear();
+  muon_vy.clear();
+  muon_vz.clear();
+  muon_px.clear();
+  muon_py.clear();
+  muon_pz.clear();
+
   muon_size = 0;
 
   l1mu_qual.clear();
