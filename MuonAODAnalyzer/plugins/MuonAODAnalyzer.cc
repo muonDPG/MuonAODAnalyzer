@@ -32,6 +32,10 @@ MuonAODAnalyzer::MuonAODAnalyzer(const edm::ParameterSet& iConfig)
     UnprefirableEventToken_(consumes<GlobalExtBlkBxCollection>(edm::InputTag("simGtExtUnprefireable"))),
     l1GtToken_(consumes<BXVector<GlobalAlgBlk>>(iConfig.getParameter<edm::InputTag>("l1GtSrc"))),
 
+    triggerResultsToken_(consumes<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT"))),
+    triggerSummaryToken_(consumes<trigger::TriggerEvent>(edm::InputTag("hltTriggerSummaryAOD", "", "HLT"))),
+
+
     MuonPtCut_(iConfig.getParameter<double>("MuonPtCut")),
     SaveTree_(iConfig.getParameter<bool>("SaveTree")),
     IsMC_(iConfig.getParameter<bool>("IsMC")),
@@ -81,6 +85,9 @@ void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 	      TString TrigPath = trigName.triggerName(i_Trig);
 	      if(TrigPath.Contains("HLT_IsoMu27_v"))HLT_IsoMu27 =true;
         if(TrigPath.Contains("HLT_IsoMu24_v"))HLT_IsoMu24 =true;
+        if(TrigPath.Contains("HLT_Mu50_v"))HLT_Mu50 =true;
+
+        if (TrigPath.Contains("Flag_goodVertices")) Flag_goodVertices = true;
       }
     }
   }
@@ -166,6 +173,7 @@ void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 
     // store all reco muons for now
     muon_size++;
+    muon_mass.push_back( (&*muon)->mass() );
     muon_eta.push_back((&*muon)->eta());
     muon_phi.push_back((&*muon)->phi());
     muon_pt.push_back((&*muon)->pt());
@@ -196,9 +204,11 @@ void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     
     if( !((&*muon)->innerTrack()).isNull()){
       muon_dxy.push_back( (&*muon)->innerTrack()->dxy(PV));
+      muon_dz.push_back( (&*muon)->innerTrack()->dz(PV));
     }
     else{
       muon_dxy.push_back(-999.);
+      muon_dz.push_back(-999.);
     }
 
     // extrapolation of muon track coordinates
@@ -221,6 +231,23 @@ void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     }
   }
 
+  edm::Handle<trigger::TriggerEvent> triggerSummary;
+  iEvent.getByToken(triggerSummaryToken_, triggerSummary);
+
+  if (triggerSummary.isValid()) {
+    const trigger::TriggerObjectCollection& objects = triggerSummary->getObjects();
+
+    for (size_t i = 0; i < objects.size(); ++i) {
+      const trigger::TriggerObject& obj = objects[i];
+      
+      TrigObj_eta.push_back(obj.eta());
+      TrigObj_phi.push_back(obj.phi());
+      TrigObj_id.push_back(obj.id());
+      TrigObj_filterBits.push_back(0); // AOD does NOT have filterBits like MiniAOD
+    }
+  }
+
+
   if(SaveTree_)outputTree->Fill();
 
 }
@@ -234,6 +261,7 @@ void MuonAODAnalyzer::beginJob() {
   outputTree->Branch("_lumiBlock", &_lumiBlock, "_lumiBlock/l");
   outputTree->Branch("_bx", &_bx, "_bx/l");
 
+  outputTree->Branch("muon_mass",&muon_mass);
   outputTree->Branch("muon_eta",&muon_eta);
   outputTree->Branch("muon_etaAtSt1",&muon_etaAtSt1);
   outputTree->Branch("muon_etaAtSt2",&muon_etaAtSt2);
@@ -297,16 +325,26 @@ void MuonAODAnalyzer::beginJob() {
 
   outputTree->Branch("HLT_IsoMu27",&HLT_IsoMu27,"HLT_IsoMu27/O");
   outputTree->Branch("HLT_IsoMu24",&HLT_IsoMu24,"HLT_IsoMu24/O");
+  outputTree->Branch("HLT_Mu50",&HLT_Mu50,"HLT_Mu50/O");
 
+  outputTree->Branch("Flag_goodVertices",&Flag_goodVertices,"Flag_goodVertices/O");
   outputTree->Branch("Flag_IsUnprefirable",&Flag_IsUnprefirable,"Flag_IsUnprefirable/O");
   outputTree->Branch("passL1_Final_bxmin1",&passL1_Final_bxmin1,"passL1_Final_bxmin1/O");
   outputTree->Branch("passL1_Final_bxmin2",&passL1_Final_bxmin2,"passL1_Final_bxmin2/O");
+
+
+  outputTree->Branch("TrigObj_eta", &TrigObj_eta);
+  outputTree->Branch("TrigObj_phi", &TrigObj_phi);
+  outputTree->Branch("TrigObj_id", &TrigObj_id);
+  outputTree->Branch("TrigObj_filterBits", &TrigObj_filterBits);
+
 }
 
 void MuonAODAnalyzer::endJob() {}
 
 void MuonAODAnalyzer::InitandClearStuff() {
 
+  muon_mass.clear();
   muon_eta.clear();
   muon_etaAtSt1.clear();
   muon_etaAtSt2.clear();
@@ -369,10 +407,18 @@ void MuonAODAnalyzer::InitandClearStuff() {
 
   HLT_IsoMu27 = false;
   HLT_IsoMu24 = false;
+  HLT_Mu50 = false;
 
+  Flag_goodVertices = false;
   Flag_IsUnprefirable = false;
   passL1_Final_bxmin1 = false;
   passL1_Final_bxmin2 = false;
+
+  TrigObj_eta.clear();
+  TrigObj_phi.clear();
+  TrigObj_id.clear();
+  TrigObj_filterBits.clear();
+
 }
 
 //define this as a plug-in

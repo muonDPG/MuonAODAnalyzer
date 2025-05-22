@@ -105,6 +105,10 @@ class MuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     edm::EDGetTokenT<GlobalExtBlkBxCollection> UnprefirableEventToken_;
     edm::EDGetTokenT<BXVector<GlobalAlgBlk>> l1GtToken_;
 
+    edm::EDGetTokenT<edm::TriggerResults> triggerResultsToken_;
+    edm::EDGetTokenT<trigger::TriggerEvent> triggerSummaryToken_;
+
+
     Float_t MuonPtCut_;
     Bool_t SaveTree_, IsMC_, Debug_;
 
@@ -139,6 +143,7 @@ class MuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     bool Flag_BadPFMuonDzFilter;
 
     //Muons
+    vector<Float_t>  muon_mass;
     vector<Float_t>  muon_eta;
     vector<Float_t>  muon_etaAtSt1;
     vector<Float_t>  muon_etaAtSt2;
@@ -208,6 +213,12 @@ class MuonAODAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     bool Flag_IsUnprefirable;
     bool passL1_Final_bxmin1;
     bool passL1_Final_bxmin2;
+
+    vector<float> TrigObj_eta;
+    vector<float> TrigObj_phi;
+    vector<int>   TrigObj_id;
+    vector<int>   TrigObj_filterBits;
+
 
     //
     // constants, enums and typedefs
