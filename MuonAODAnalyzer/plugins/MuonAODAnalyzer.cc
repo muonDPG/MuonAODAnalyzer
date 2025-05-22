@@ -196,9 +196,11 @@ void MuonAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     
     if( !((&*muon)->innerTrack()).isNull()){
       muon_dxy.push_back( (&*muon)->innerTrack()->dxy(PV));
+      muon_dz.push_back( (&*muon)->innerTrack()->dz(PV));
     }
     else{
       muon_dxy.push_back(-999.);
+      muon_dz.push_back(-999.);
     }
 
     // extrapolation of muon track coordinates
