@@ -27,12 +27,12 @@ MuonAODAnalyzer = cms.EDAnalyzer('MuonAODAnalyzer',
     ),
     # muon track extrapolation to 2nd station
     muProp2nd = cms.PSet(
-          useTrack = cms.string("global"),  # 'none' to use Candidate P4; or 'tracker', 'muon', 'global'
-          useState = cms.string("innermost"), # 'innermost' and 'outermost' require the TrackExtra
+          useTrack = cms.string("none"),  # 'none' to use Candidate P4; or 'tracker', 'muon', 'global'
+          useState = cms.string("atVertex"), # 'innermost' and 'outermost' require the TrackExtra
           useSimpleGeometry = cms.bool(False),
           useStation2 = cms.bool(True),
           fallbackToME1 = cms.bool(False),
-          cosmicPropagationHypothesis = cms.bool(True),
+          cosmicPropagationHypothesis = cms.bool(False),
           useMB2InOverlap = cms.bool(True),
           propagatorAlong = cms.ESInputTag("", "SteppingHelixPropagatorAlong"),
           propagatorAny = cms.ESInputTag("", "SteppingHelixPropagatorAny"),
